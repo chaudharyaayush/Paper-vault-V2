@@ -1,0 +1,3 @@
+import { ChevronRight, Home } from "lucide-react";
+import { Link } from "react-router-dom";
+export default function Breadcrumbs({items=[]}){return <nav className="mono flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.12em]" aria-label="Breadcrumb"><Link to="/" className="focus-ring inline-flex items-center gap-1 hover:underline"><Home size={13}/> HOME</Link>{items.map((item,index)=><span key={`${item.label}-${index}`} className="inline-flex items-center gap-2"><ChevronRight size={13}/>{item.to?<Link className="focus-ring hover:underline" to={item.to}>{item.label}</Link>:<span className="text-black/50">{item.label}</span>}</span>)}</nav>}

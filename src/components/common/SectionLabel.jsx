@@ -1,0 +1,1 @@
+export default function SectionLabel({number,children}){return <div className="mono flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.18em]"><span className="inline-block h-2 w-2 bg-orange"/><span>/{number}</span><span>·</span><span>{children}</span></div>}

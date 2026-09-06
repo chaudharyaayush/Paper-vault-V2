@@ -1,0 +1,4 @@
+import { ArrowUpRight, LockKeyhole } from "lucide-react";
+import { Link } from "react-router-dom";
+const accents={acid:"bg-acid",green:"bg-green",orange:"bg-orange",lavender:"bg-lavender"};
+export default function DepartmentCard({department,index}){const live=department.status==="live";const content=<div className={`offset-card brutal-border brutal-shadow h-full min-h-[260px] p-6 ${accents[department.accent]||"bg-paper"}`}><div className="flex items-start justify-between"><span className="mono text-xs font-bold">{String(index+1).padStart(2,"0")}</span>{live?<ArrowUpRight size={25}/>:<LockKeyhole size={22}/>}</div><div className="mt-16"><div className="display text-5xl leading-none sm:text-6xl">{department.name}</div><div className="mono mt-3 text-xs font-semibold uppercase tracking-[0.12em]">{department.code} · {live?"ARCHIVE LIVE":"COMING SOON"}</div></div></div>;return live?<Link to={`/${department.slug}`}>{content}</Link>:<div>{content}</div>}

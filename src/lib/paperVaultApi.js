@@ -38,4 +38,14 @@ export async function getPapers() {
   if (error) throw error;
 
   return data;
-} 
+}
+
+export async function getSemesters() {
+  const { data, error } = await supabase
+    .from("semesters")
+    .select("*");
+
+  if (error) throw error;
+
+  return data;
+}

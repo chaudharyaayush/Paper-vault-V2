@@ -1,6 +1,8 @@
 import { Routes, Route } from "react-router-dom";
+
 import Header from "./components/layout/Header";
 import Footer from "./components/layout/Footer";
+
 import Home from "./pages/Home";
 import Departments from "./pages/Departments";
 import Courses from "./pages/Courses";
@@ -14,18 +16,48 @@ export default function App() {
   return (
     <div className="min-h-screen bg-paper text-ink">
       <Header />
+
       <main>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/departments" element={<Departments />} />
-          <Route path="/:departmentSlug" element={<Courses />} />
-          <Route path="/:departmentSlug/:courseSlug" element={<Semesters />} />
-          <Route path="/:departmentSlug/:courseSlug/semester-:semesterNumber" element={<Subjects />} />
-          <Route path="/:departmentSlug/:courseSlug/semester-:semesterNumber/:subjectSlug" element={<Papers />} />
-          <Route path="/admin" element={<Admin />} />
-          <Route path="*" element={<NotFound />} />
+
+          <Route
+            path="/departments"
+            element={<Departments />}
+          />
+
+          <Route
+            path="/:departmentSlug"
+            element={<Courses />}
+          />
+
+          <Route
+            path="/:departmentSlug/:courseSlug"
+            element={<Semesters />}
+          />
+
+          <Route
+            path="/:departmentSlug/:courseSlug/:semesterNumber"
+            element={<Subjects />}
+          />
+
+          <Route
+            path="/:departmentSlug/:courseSlug/:semesterNumber/:subjectSlug"
+            element={<Papers />}
+          />
+
+          <Route
+            path="/admin"
+            element={<Admin />}
+          />
+
+          <Route
+            path="*"
+            element={<NotFound />}
+          />
         </Routes>
       </main>
+
       <Footer />
     </div>
   );

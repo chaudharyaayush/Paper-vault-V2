@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 import { useParams } from "react-router-dom";
 
@@ -10,7 +10,7 @@ import EmptyState from "../components/common/EmptyState";
 import {
   getCourses,
   getSemesters,
-  getSubjects,
+  getSubjectsBySemesterId,
 } from "../lib/paperVaultApi";
 
 export default function Subjects() {
@@ -20,13 +20,17 @@ export default function Subjects() {
     semesterNumber,
   } = useParams();
 
-  const [courses, setCourses] = useState([]);
-  const [semesters, setSemesters] = useState([]);
+  const [course, setCourse] = useState(null);
+  const [semester, setSemester] = useState(null);
   const [subjects, setSubjects] = useState([]);
 
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const actualSemesterNumber = String(
+    semesterNumber || ""
+  ).replace("semester-", "");
 
   useEffect(() => {
     async function loadSubjectsData() {
@@ -34,52 +38,109 @@ export default function Subjects() {
         setLoading(true);
         setError("");
 
-        const [coursesData, semestersData, subjectsData] =
+        const [coursesData, semestersData] =
           await Promise.all([
             getCourses(),
             getSemesters(),
-            getSubjects(),
           ]);
 
-        setCourses(coursesData);
-        setSemesters(semestersData);
-        setSubjects(subjectsData);
+        console.log("COURSE SLUG FROM URL:", courseSlug);
+        console.log(
+          "ALL COURSES FROM SUPABASE:",
+          coursesData
+        );
+
+        const normalizedCourseSlug = String(
+          courseSlug || ""
+        )
+          .trim()
+          .toLowerCase();
+
+        const matchedCourse = coursesData.find((item) => {
+          const databaseSlug = String(item.slug || "")
+            .trim()
+            .toLowerCase();
+
+          return databaseSlug === normalizedCourseSlug;
+        });
+
+        if (!matchedCourse) {
+          throw new Error(
+            `Course not found. URL slug: ${courseSlug}`
+          );
+        }
+
+        console.log("MATCHED COURSE:", matchedCourse);
+
+        const matchedSemester = semestersData.find(
+          (item) => {
+            const semesterMatches =
+              String(item.semester_number) ===
+              actualSemesterNumber;
+
+            const courseMatches =
+              String(item.course_id) ===
+              String(matchedCourse.id);
+
+            return semesterMatches && courseMatches;
+          }
+        );
+
+        if (!matchedSemester) {
+          throw new Error(
+            `Semester ${actualSemesterNumber} not found for this course`
+          );
+        }
+
+        console.log(
+          "MATCHED SEMESTER:",
+          matchedSemester
+        );
+
+        const subjectsData =
+          await getSubjectsBySemesterId(
+            matchedSemester.id
+          );
+
+        console.log(
+          "SUBJECTS FROM SUPABASE:",
+          subjectsData
+        );
+
+        setCourse(matchedCourse);
+        setSemester(matchedSemester);
+        setSubjects(subjectsData || []);
       } catch (err) {
         console.error("Error loading subjects:", err);
-        setError("Unable to load subjects. Please try again.");
+
+        setError(
+          err.message || "Unable to load subjects."
+        );
       } finally {
         setLoading(false);
       }
     }
 
     loadSubjectsData();
-  }, []);
+  }, [courseSlug, actualSemesterNumber]);
 
-  const course = courses.find(
-    (item) => item.slug === courseSlug
-  );
+  const normalizedQuery = query.trim().toLowerCase();
 
-  const semester = semesters.find(
-    (item) =>
-      item.course_id === course?.id &&
-      String(item.semester_number) === String(semesterNumber)
-  );
+  const filteredSubjects = subjects.filter((subject) => {
+    const subjectName = String(
+      subject.name || ""
+    ).toLowerCase();
 
-  const semesterSubjects = useMemo(() => {
-    const normalized = query.trim().toLowerCase();
+    const subjectCode = String(
+      subject.code || ""
+    ).toLowerCase();
 
-    return subjects.filter((subject) => {
-      const matchesSemester =
-        subject.semester_id === semester?.id;
-
-      const matchesSearch =
-        !normalized ||
-        subject.name?.toLowerCase().includes(normalized) ||
-        subject.code?.toLowerCase().includes(normalized);
-
-      return matchesSemester && matchesSearch;
-    });
-  }, [subjects, semester, query]);
+    return (
+      !normalizedQuery ||
+      subjectName.includes(normalizedQuery) ||
+      subjectCode.includes(normalizedQuery)
+    );
+  });
 
   return (
     <section className="min-h-[75vh] px-5 py-12 lg:px-8 lg:py-20">
@@ -94,11 +155,12 @@ export default function Subjects() {
               label:
                 course?.short_name ||
                 course?.shortName ||
+                course?.name ||
                 courseSlug,
               to: `/${departmentSlug}/${courseSlug}`,
             },
             {
-              label: `SEM ${semesterNumber}`,
+              label: `SEM ${actualSemesterNumber}`,
             },
           ]}
         />
@@ -106,12 +168,13 @@ export default function Subjects() {
         <div className="mt-16 grid gap-10 lg:grid-cols-[1fr_420px] lg:items-end">
           <div>
             <SectionLabel number="04">
-              SEMESTER {semesterNumber}
+              SEMESTER {actualSemesterNumber}
             </SectionLabel>
 
             <h1 className="display mt-5 text-[clamp(5rem,12vw,11rem)] leading-[.78]">
               SUBJECT
               <br />
+
               <span
                 className="text-transparent"
                 style={{
@@ -159,7 +222,7 @@ export default function Subjects() {
 
               {loading
                 ? "Loading subjects..."
-                : `${semesterSubjects.length} subjects found`}
+                : `${filteredSubjects.length} subjects found`}
             </div>
           </div>
         </div>
@@ -173,8 +236,8 @@ export default function Subjects() {
             <div className="mono border-t-[3px] border-ink py-8 text-xs uppercase text-red-600">
               {error}
             </div>
-          ) : semesterSubjects.length ? (
-            semesterSubjects.map((subject, index) => (
+          ) : filteredSubjects.length > 0 ? (
+            filteredSubjects.map((subject, index) => (
               <SubjectRow
                 key={subject.id}
                 subject={subject}

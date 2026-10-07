@@ -61,7 +61,9 @@ export async function getSubjects() {
 }
 
 // Get subjects connected to a particular semester
-export async function getSubjectsBySemesterId(semesterId) {
+export async function getSubjectsBySemesterId(
+  semesterId
+) {
   if (!semesterId) {
     throw new Error("Semester ID is missing");
   }
@@ -77,6 +79,7 @@ export async function getSubjectsBySemesterId(semesterId) {
       "Error fetching subjects by semester ID:",
       error
     );
+
     throw error;
   }
 
@@ -99,22 +102,45 @@ export async function getPapers() {
 }
 
 // Get a temporary URL for a paper PDF
-export async function getPaperFileUrl(storagePath) {
+export async function getPaperFileUrl(
+  storagePath
+) {
   if (!storagePath) {
-    throw new Error("Paper storage path is missing");
+    throw new Error(
+      "Paper storage path is missing"
+    );
   }
 
-  const { data, error } = await supabase.storage
-    .from("papers")
-    .createSignedUrl(storagePath, 60 * 60);
+  const cleanPath = String(storagePath)
+    .trim()
+    .replace(/^\/+/, "");
+
+  console.log(
+    "CREATING SIGNED URL FOR:",
+    cleanPath
+  );
+
+  const { data, error } =
+    await supabase.storage
+      .from("papers")
+      .createSignedUrl(
+        cleanPath,
+        60 * 60
+      );
 
   if (error) {
     console.error(
       "Error creating paper URL:",
       error
     );
+
     throw error;
   }
+
+  console.log(
+    "SIGNED URL CREATED:",
+    data?.signedUrl
+  );
 
   return data?.signedUrl || null;
 }

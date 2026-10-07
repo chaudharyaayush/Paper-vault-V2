@@ -45,7 +45,9 @@ export function useAdmin() {
       };
     }
 
-    return { success: true };
+    return {
+      success: true,
+    };
   }
 
   async function logout() {
